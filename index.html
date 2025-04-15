@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Row Hero</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 600px;
+            height: 500px;
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            border: 2px solid #3a3a3a;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .game-header {
+            background-color: #2a2a2a;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #3a3a3a;
+        }
+        
+        .score-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        #score, #high-score, #level, #lives {
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .game-area {
+            position: relative;
+            height: 430px;
+            background-color: #1e1e1e;
+            overflow: hidden;
+        }
+        
+        .letter {
+            position: absolute;
+            font-size: 28px;
+            font-weight: bold;
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            line-height: 40px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            animation: fall linear;
+        }
+        
+        .key {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            text-align: center;
+            line-height: 50px;
+            font-size: 20px;
+            box-shadow: 0 4px 0 #1a1a1a;
+            transition: all 0.1s;
+        }
+        
+        .key.home-row {
+            background-color: #3a3a3a;
+            border: 2px solid #5a5a5a;
+        }
+        
+        .key.active {
+            background-color: #4CAF50;
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #1a1a1a;
+        }
+        
+        .keyboard {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .start-screen, .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .start-btn, .retry-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        .start-btn:hover, .retry-btn:hover {
+            background-color: #3e8e41;
+        }
+        
+        @keyframes fall {
+            from { top: -50px; }
+            to { top: 430px; }
+        }
+        
+        .explosion {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.8);
+            animation: explode 0.5s ease-out forwards;
+        }
+        
+        @keyframes explode {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+        
+        .level-up {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            font-weight: bold;
+            color: #4CAF50;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.7);
+            animation: levelUp 2s ease-out forwards;
+            z-index: 5;
+        }
+        
+        @keyframes levelUp {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score-container">
+                <div>Score: <span id="score">0</span></div>
+                <div>High Score: <span id="high-score">0</span></div>
+            </div>
+            <div class="level-container">
+                Level: <span id="level">1</span>
+            </div>
+            <div class="lives-container">
+                Lives: <span id="lives">3</span>
+            </div>
+        </div>
+        <div class="game-area" id="game-area"></div>
+        <div class="start-screen" id="start-screen">
+            <h1>Home Row Hero</h1>
+            <p>Type the falling letters before they hit the bottom!</p>
+            <p>Focus on home row keys: A S D F J K L ;</p>
+            <button class="start-btn" id="start-btn">Start Game</button>
+        </div>
+        <div class="game-over-screen" id="game-over-screen" style="display: none;">
+            <h1>Game Over</h1>
+            <p>Your Score: <span id="final-score">0</span></p>
+            <button class="retry-btn" id="retry-btn">Play Again</button>
+        </div>
+    </div>
+    
+    <div class="keyboard">
+        <div class="keyboard-row">
+            <div class="key">Q</div>
+            <div class="key">W</div>
+            <div class="key">E</div>
+            <div class="key">R</div>
+            <div class="key">T</div>
+            <div class="key">Y</div>
+            <div class="key">U</div>
+            <div class="key">I</div>
+            <div class="key">O</div>
+            <div class="key">P</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="key home-row" id="key-a">A</div>
+            <div class="key home-row" id="key-s">S</div>
+            <div class="key home-row" id="key-d">D</div>
+            <div class="key home-row" id="key-f">F</div>
+            <div class="key">G</div>
+            <div class="key">H</div>
+            <div class="key home-row" id="key-j">J</div>
+            <div class="key home-row" id="key-k">K</div>
+            <div class="key home-row" id="key-l">L</div>
+            <div class="key home-row" id="key-semicolon">;</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="key">Z</div>
+            <div class="key">X</div>
+            <div class="key">C</div>
+            <div class="key">V</div>
+            <div class="key">B</div>
+            <div class="key">N</div>
+            <div class="key">M</div>
+        </div>
+    </div>
+    
+    <script>
+        // Game variables
+        const homeRowKeys = ['a', 's', 'd', 'f', 'j', 'k', 'l', ';'];
+        const keyColors = {
+            'a': '#FF5252', // red
+            's': '#FF9800', // orange
+            'd': '#FFEB3B', // yellow
+            'f': '#4CAF50', // green
+            'j': '#2196F3', // blue
+            'k': '#9C27B0', // purple
+            'l': '#E91E63', // pink
+            ';': '#00BCD4'  // cyan
+        };
+        
+        let letters = [];
+        let score = 0;
+        let highScore = localStorage.getItem('homeRowHeroHighScore') || 0;
+        let level = 1;
+        let lives = 3;
+        let gameSpeed = 5; // seconds for letter to fall
+        let spawnRate = 2000; // new letter every 2 seconds
+        let gameActive = false;
+        let spawnInterval;
+        
+        // DOM elements
+        const gameArea = document.getElementById('game-area');
+        const scoreElement = document.getElementById('score');
+        const highScoreElement = document.getElementById('high-score');
+        const levelElement = document.getElementById('level');
+        const livesElement = document.getElementById('lives');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const startBtn = document.getElementById('start-btn');
+        const retryBtn = document.getElementById('retry-btn');
+        const finalScoreElement = document.getElementById('final-score');
+        
+        // Update UI
+        highScoreElement.textContent = highScore;
+        
+        // Event listeners
+        startBtn.addEventListener('click', startGame);
+        retryBtn.addEventListener('click', restartGame);
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
+        
+        // Game functions
+        function startGame() {
+            startScreen.style.display = 'none';
+            gameActive = true;
+            spawnInterval = setInterval(spawnLetter, spawnRate);
+        }
+        
+        function restartGame() {
+            // Reset game variables
+            clearInterval(spawnInterval);
+            letters.forEach(letter => letter.element.remove());
+            letters = [];
+            score = 0;
+            level = 1;
+            lives = 3;
+            gameSpeed = 5;
+            spawnRate = 2000;
+            
+            // Update UI
+            scoreElement.textContent = score;
+            levelElement.textContent = level;
+            livesElement.textContent = lives;
+            gameOverScreen.style.display = 'none';
+            
+            // Start game
+            gameActive = true;
+            spawnInterval = setInterval(spawnLetter, spawnRate);
+        }
+        
+        function endGame() {
+            gameActive = false;
+            clearInterval(spawnInterval);
+            finalScoreElement.textContent = score;
+            gameOverScreen.style.display = 'flex';
+            
+            // Update high score
+            if (score > highScore) {
+                highScore = score;
+                highScoreElement.textContent = highScore;
+                localStorage.setItem('homeRowHeroHighScore', highScore);
+            }
+        }
+        
+        function spawnLetter() {
+            if (!gameActive) return;
+            
+            const keyIndex = Math.floor(Math.random() * homeRowKeys.length);
+            const key = homeRowKeys[keyIndex];
+            const keyColor = keyColors[key];
+            
+            // Create letter element
+            const letterElement = document.createElement('div');
+            letterElement.className = 'letter';
+            letterElement.textContent = key.toUpperCase();
+            letterElement.style.backgroundColor = keyColor;
+            letterElement.style.color = '#fff';
+            letterElement.style.left = `${Math.random() * (gameArea.offsetWidth - 40)}px`;
+            letterElement.style.animationDuration = `${gameSpeed}s`;
+            
+            gameArea.appendChild(letterElement);
+            
+            // Add letter to tracking array
+            const letterObj = {
+                key: key,
+                element: letterElement,
+                active: true
+            };
+            letters.push(letterObj);
+            
+            // Set timeout to remove letter if it reaches bottom
+            letterElement.addEventListener('animationend', () => {
+                if (letterObj.active) {
+                    letterObj.active = false;
+                    letterElement.remove();
+                    letters = letters.filter(l => l !== letterObj);
+                    
+                    // Lose a life
+                    lives--;
+                    livesElement.textContent = lives;
+                    
+                    if (lives <= 0) {
+                        endGame();
+                    }
+                }
+            });
+        }
+        
+        function handleKeyDown(e) {
+            if (!gameActive) return;
+            
+            const key = e.key.toLowerCase();
+            if (homeRowKeys.includes(key)) {
+                // Highlight the key on the keyboard
+                const keyElement = document.getElementById(`key-${key === ';' ? 'semicolon' : key}`);
+                if (keyElement) {
+                    keyElement.classList.add('active');
+                }
+                
+                // Check if there's a matching letter
+                const matchingLetterIndex = letters.findIndex(letter => letter.key === key && letter.active);
+                
+                if (matchingLetterIndex !== -1) {
+                    const letter = letters[matchingLetterIndex];
+                    letter.active = false;
+                    
+                    // Calculate points based on position
+                    const position = letter.element.getBoundingClientRect().top - gameArea.getBoundingClientRect().top;
+                    const maxPoints = 10;
+                    const points = Math.max(1, Math.floor(maxPoints * (1 - position / gameArea.offsetHeight)));
+                    
+                    // Update score
+                    score += points * level;
+                    scoreElement.textContent = score;
+                    
+                    // Create explosion effect
+                    createExplosion(letter.element);
+                    
+                    // Remove letter
+                    letter.element.remove();
+                    letters = letters.filter(l => l !== letter);
+                    
+                    // Level up if needed
+                    checkLevelUp();
+                }
+            }
+        }
+        
+        function handleKeyUp(e) {
+            const key = e.key.toLowerCase();
+            if (homeRowKeys.includes(key)) {
+                const keyElement = document.getElementById(`key-${key === ';' ? 'semicolon' : key}`);
+                if (keyElement) {
+                    keyElement.classList.remove('active');
+                }
+            }
+        }
+        
+        function createExplosion(letterElement) {
+            const rect = letterElement.getBoundingClientRect();
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.style.left = `${rect.left - gameAreaRect.left + 20}px`;
+            explosion.style.top = `${rect.top - gameAreaRect.top + 20}px`;
+            explosion.style.backgroundColor = letterElement.style.backgroundColor;
+            
+            gameArea.appendChild(explosion);
+            
+            // Remove after animation
+            setTimeout(() => {
+                explosion.remove();
+            }, 500);
+        }
+        
+        function checkLevelUp() {
+            const levelThreshold = level * 100;
+            if (score >= levelThreshold) {
+                level++;
+                levelElement.textContent = level;
+                
+                // Speed up game
+                gameSpeed = Math.max(1.5, 5 - (level * 0.3));
+                spawnRate = Math.max(500, 2000 - (level * 150));
+                
+                // Clear and reset interval with new spawn rate
+                clearInterval(spawnInterval);
+                spawnInterval = setInterval(spawnLetter, spawnRate);
+                
+                // Show level up message
+                const levelUpMsg = document.createElement('div');
+                levelUpMsg.className = 'level-up';
+                levelUpMsg.textContent = `Level ${level}!`;
+                gameArea.appendChild(levelUpMsg);
+                
+                // Remove message after animation
+                setTimeout(() => {
+                    levelUpMsg.remove();
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>
