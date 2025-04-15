@@ -45,7 +45,7 @@
             align-items: center;
         }
         
-        #score, #high-score, #level, #lives {
+        #score, #high-score, #level, #lives, #rank {
             font-size: 20px;
             font-weight: bold;
             color: #fff;
@@ -108,7 +108,7 @@
             justify-content: center;
         }
         
-        .start-screen, .game-over-screen {
+        .start-screen, .game-over-screen, .leaderboard-screen {
             position: absolute;
             top: 0;
             left: 0;
@@ -122,7 +122,13 @@
             z-index: 10;
         }
         
-        .start-btn, .retry-btn {
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .start-btn, .retry-btn, .leaderboard-btn, .back-btn {
             background-color: #4CAF50;
             color: white;
             border: none;
@@ -130,13 +136,105 @@
             font-size: 18px;
             border-radius: 8px;
             cursor: pointer;
-            margin-top: 20px;
             transition: background-color 0.3s;
         }
         
-        .start-btn:hover, .retry-btn:hover {
+        .start-btn:hover, .retry-btn:hover, .leaderboard-btn:hover, .back-btn:hover {
             background-color: #3e8e41;
         }
+        
+        .leaderboard-btn, .back-btn {
+            background-color: #2196F3;
+        }
+        
+        .leaderboard-btn:hover, .back-btn:hover {
+            background-color: #1976D2;
+        }
+        
+        .leaderboard-table {
+            width: 80%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            color: white;
+        }
+        
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        
+        .leaderboard-table th {
+            background-color: #2a2a2a;
+        }
+        
+        .leaderboard-table tr:nth-child(even) {
+            background-color: #252525;
+        }
+        
+        .leaderboard-table tr:nth-child(odd) {
+            background-color: #2d2d2d;
+        }
+        
+        .leaderboard-table tr.current-player {
+            background-color: rgba(76, 175, 80, 0.3);
+            font-weight: bold;
+        }
+        
+        .username-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .username-input {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #3a3a3a;
+            background-color: #2a2a2a;
+            color: #fff;
+            margin-bottom: 10px;
+            width: 200px;
+        }
+        
+        .submit-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .rank-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            z-index: 5;
+        }
+        
+        .badge {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+        
+        .bronze { background-color: #CD7F32; }
+        .silver { background-color: #C0C0C0; }
+        .gold { background-color: #FFD700; }
+        .platinum { background-color: #E5E4E2; }
+        .diamond { background-color: #B9F2FF; }
         
         @keyframes fall {
             from { top: -50px; }
@@ -190,6 +288,27 @@
                 transform: translate(-50%, -50%) scale(1);
             }
         }
+        
+        .achievement {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(33, 150, 243, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            z-index: 100;
+            animation: fadeInOut 3s ease-in-out forwards;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; top: 150px; }
+            15% { opacity: 1; top: 100px; }
+            85% { opacity: 1; top: 100px; }
+            100% { opacity: 0; top: 50px; }
+        }
     </style>
 </head>
 <body>
@@ -206,17 +325,49 @@
                 Lives: <span id="lives">3</span>
             </div>
         </div>
-        <div class="game-area" id="game-area"></div>
+        <div class="game-area" id="game-area">
+            <div class="rank-container" id="rank-container" style="display: none;">
+                Rank: <span id="rank">Novice</span>
+            </div>
+        </div>
         <div class="start-screen" id="start-screen">
             <h1>Home Row Hero</h1>
             <p>Type the falling letters before they hit the bottom!</p>
             <p>Focus on home row keys: A S D F J K L ;</p>
-            <button class="start-btn" id="start-btn">Start Game</button>
+            <div class="username-form">
+                <input type="text" id="username-input" class="username-input" placeholder="Enter your username" maxlength="15">
+            </div>
+            <div class="button-container">
+                <button class="start-btn" id="start-btn">Start Game</button>
+                <button class="leaderboard-btn" id="view-leaderboard-btn">Leaderboard</button>
+            </div>
         </div>
         <div class="game-over-screen" id="game-over-screen" style="display: none;">
             <h1>Game Over</h1>
             <p>Your Score: <span id="final-score">0</span></p>
-            <button class="retry-btn" id="retry-btn">Play Again</button>
+            <p>Your Rank: <span id="final-rank">Novice</span></p>
+            <div class="button-container">
+                <button class="retry-btn" id="retry-btn">Play Again</button>
+                <button class="leaderboard-btn" id="game-over-leaderboard-btn">Leaderboard</button>
+            </div>
+        </div>
+        <div class="leaderboard-screen" id="leaderboard-screen" style="display: none;">
+            <h1>Leaderboard</h1>
+            <table class="leaderboard-table" id="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Score</th>
+                        <th>Level</th>
+                        <th>Badge</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <!-- Will be filled dynamically -->
+                </tbody>
+            </table>
+            <button class="back-btn" id="back-btn">Back</button>
         </div>
     </div>
     
@@ -270,15 +421,54 @@
             ';': '#00BCD4'  // cyan
         };
         
+        // Ranking system
+        const ranks = [
+            { name: "Novice", minScore: 0 },
+            { name: "Beginner", minScore: 100 },
+            { name: "Apprentice", minScore: 300 },
+            { name: "Journeyman", minScore: 600 },
+            { name: "Expert", minScore: 1000 },
+            { name: "Master", minScore: 1500 },
+            { name: "Grandmaster", minScore: 2500 },
+            { name: "Legend", minScore: 5000 }
+        ];
+        
+        // Achievements
+        const achievements = [
+            { name: "First Steps", description: "Reach score 100", score: 100, unlocked: false },
+            { name: "Getting Better", description: "Reach score 500", score: 500, unlocked: false },
+            { name: "Home Row Master", description: "Reach score 1000", score: 1000, unlocked: false },
+            { name: "Speed Demon", description: "Reach level 5", level: 5, unlocked: false },
+            { name: "Unstoppable", description: "Reach level 10", level: 10, unlocked: false }
+        ];
+        
+        // Sample leaderboard entries (will be merged with real scores)
+        const sampleLeaderboard = [
+            { username: "TypeMaster", score: 7850, level: 15 },
+            { username: "KeyboardWizard", score: 6240, level: 12 },
+            { username: "SpeedyFingers", score: 4590, level: 10 },
+            { username: "HomeRowPro", score: 3120, level: 8 },
+            { username: "QuickTyper", score: 2380, level: 7 },
+            { username: "KeyStrokes", score: 1750, level: 6 },
+            { username: "TypingNinja", score: 1260, level: 5 },
+            { username: "KeyboardKing", score: 840, level: 4 },
+            { username: "FastKeys", score: 510, level: 3 },
+            { username: "BeginnerTyper", score: 230, level: 2 }
+        ];
+        
         let letters = [];
         let score = 0;
-        let highScore = localStorage.getItem('homeRowHeroHighScore') || 0;
+        let highScore = 0;
         let level = 1;
         let lives = 3;
         let gameSpeed = 5; // seconds for letter to fall
         let spawnRate = 2000; // new letter every 2 seconds
         let gameActive = false;
         let spawnInterval;
+        let username = "Player";
+        let playerRank = "Novice";
+        let userScores = [];
+        let unlockedAchievements = [];
         
         // DOM elements
         const gameArea = document.getElementById('game-area');
@@ -286,11 +476,23 @@
         const highScoreElement = document.getElementById('high-score');
         const levelElement = document.getElementById('level');
         const livesElement = document.getElementById('lives');
+        const rankElement = document.getElementById('rank');
+        const rankContainer = document.getElementById('rank-container');
         const startScreen = document.getElementById('start-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
+        const leaderboardScreen = document.getElementById('leaderboard-screen');
         const startBtn = document.getElementById('start-btn');
         const retryBtn = document.getElementById('retry-btn');
+        const viewLeaderboardBtn = document.getElementById('view-leaderboard-btn');
+        const gameOverLeaderboardBtn = document.getElementById('game-over-leaderboard-btn');
+        const backBtn = document.getElementById('back-btn');
         const finalScoreElement = document.getElementById('final-score');
+        const finalRankElement = document.getElementById('final-rank');
+        const usernameInput = document.getElementById('username-input');
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        
+        // Load saved data
+        loadGameData();
         
         // Update UI
         highScoreElement.textContent = highScore;
@@ -298,14 +500,61 @@
         // Event listeners
         startBtn.addEventListener('click', startGame);
         retryBtn.addEventListener('click', restartGame);
+        viewLeaderboardBtn.addEventListener('click', showLeaderboard);
+        gameOverLeaderboardBtn.addEventListener('click', showLeaderboard);
+        backBtn.addEventListener('click', hideLeaderboard);
         document.addEventListener('keydown', handleKeyDown);
         document.addEventListener('keyup', handleKeyUp);
         
         // Game functions
+        function loadGameData() {
+            // Load high score
+            const savedHighScore = localStorage.getItem('homeRowHeroHighScore');
+            if (savedHighScore) {
+                highScore = parseInt(savedHighScore);
+            }
+            
+            // Load username
+            const savedUsername = localStorage.getItem('homeRowHeroUsername');
+            if (savedUsername) {
+                username = savedUsername;
+                usernameInput.value = username;
+            }
+            
+            // Load user scores
+            const savedScores = localStorage.getItem('homeRowHeroScores');
+            if (savedScores) {
+                userScores = JSON.parse(savedScores);
+            }
+            
+            // Load achievements
+            const savedAchievements = localStorage.getItem('homeRowHeroAchievements');
+            if (savedAchievements) {
+                unlockedAchievements = JSON.parse(savedAchievements);
+            }
+        }
+        
+        function saveGameData() {
+            localStorage.setItem('homeRowHeroHighScore', highScore);
+            localStorage.setItem('homeRowHeroUsername', username);
+            localStorage.setItem('homeRowHeroScores', JSON.stringify(userScores));
+            localStorage.setItem('homeRowHeroAchievements', JSON.stringify(unlockedAchievements));
+        }
+        
         function startGame() {
+            // Save username
+            if (usernameInput.value.trim() !== "") {
+                username = usernameInput.value.trim();
+                localStorage.setItem('homeRowHeroUsername', username);
+            }
+            
             startScreen.style.display = 'none';
+            rankContainer.style.display = 'block';
             gameActive = true;
             spawnInterval = setInterval(spawnLetter, spawnRate);
+            
+            // Update rank display
+            updateRank();
         }
         
         function restartGame() {
@@ -318,12 +567,15 @@
             lives = 3;
             gameSpeed = 5;
             spawnRate = 2000;
+            playerRank = "Novice";
             
             // Update UI
             scoreElement.textContent = score;
             levelElement.textContent = level;
             livesElement.textContent = lives;
+            rankElement.textContent = playerRank;
             gameOverScreen.style.display = 'none';
+            rankContainer.style.display = 'block';
             
             // Start game
             gameActive = true;
@@ -334,14 +586,81 @@
             gameActive = false;
             clearInterval(spawnInterval);
             finalScoreElement.textContent = score;
+            finalRankElement.textContent = playerRank;
             gameOverScreen.style.display = 'flex';
             
             // Update high score
             if (score > highScore) {
                 highScore = score;
                 highScoreElement.textContent = highScore;
-                localStorage.setItem('homeRowHeroHighScore', highScore);
             }
+            
+            // Save score to leaderboard
+            userScores.push({
+                username: username,
+                score: score,
+                level: level,
+                date: new Date().toISOString()
+            });
+            
+            // Keep only top 10 personal scores
+            userScores.sort((a, b) => b.score - a.score);
+            if (userScores.length > 10) {
+                userScores = userScores.slice(0, 10);
+            }
+            
+            // Save game data
+            saveGameData();
+        }
+        
+        function updateRank() {
+            // Find the highest rank for current score
+            let newRank = ranks[0].name;
+            for (let i = ranks.length - 1; i >= 0; i--) {
+                if (score >= ranks[i].minScore) {
+                    newRank = ranks[i].name;
+                    break;
+                }
+            }
+            
+            // Update only if rank changed
+            if (newRank !== playerRank) {
+                playerRank = newRank;
+                rankElement.textContent = playerRank;
+                
+                // Show rank up notification if not at the start of the game
+                if (score > 0) {
+                    showAchievement(`Rank Up: ${playerRank}!`);
+                }
+            }
+        }
+        
+        function checkAchievements() {
+            achievements.forEach(achievement => {
+                if (!unlockedAchievements.includes(achievement.name)) {
+                    if (
+                        (achievement.score && score >= achievement.score) ||
+                        (achievement.level && level >= achievement.level)
+                    ) {
+                        // Unlock achievement
+                        unlockedAchievements.push(achievement.name);
+                        showAchievement(`Achievement: ${achievement.name}!`);
+                        saveGameData();
+                    }
+                }
+            });
+        }
+        
+        function showAchievement(text) {
+            const achievement = document.createElement('div');
+            achievement.className = 'achievement';
+            achievement.textContent = text;
+            gameArea.appendChild(achievement);
+            
+            // Remove after animation
+            setTimeout(() => {
+                achievement.remove();
+            }, 3000);
         }
         
         function spawnLetter() {
@@ -422,6 +741,12 @@
                     letter.element.remove();
                     letters = letters.filter(l => l !== letter);
                     
+                    // Update rank
+                    updateRank();
+                    
+                    // Check achievements
+                    checkAchievements();
+                    
                     // Level up if needed
                     checkLevelUp();
                 }
@@ -482,6 +807,76 @@
                 }, 2000);
             }
         }
+        
+        function showLeaderboard() {
+            // Combine user scores with sample scores
+            const combinedScores = [...userScores, ...sampleLeaderboard];
+            // Sort by score (highest first)
+            combinedScores.sort((a, b) => b.score - a.score);
+            // Take top 15
+            const topScores = combinedScores.slice(0, 15);
+            
+            // Clear existing leaderboard
+            leaderboardBody.innerHTML = '';
+            
+            // Add scores to leaderboard
+            topScores.forEach((entry, index) => {
+                const row = document.createElement('tr');
+                
+                // Highlight current player's scores
+                if (entry.username === username && !sampleLeaderboard.some(s => s === entry)) {
+                    row.className = 'current-player';
+                }
+                
+                // Determine badge
+                let badgeClass = '';
+                if (index === 0) badgeClass = 'gold';
+                else if (index === 1) badgeClass = 'silver';
+                else if (index === 2) badgeClass = 'bronze';
+                else if (index < 5) badgeClass = 'platinum';
+                else if (index < 10) badgeClass = 'diamond';
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${entry.username}</td>
+                    <td>${entry.score}</td>
+                    <td>${entry.level}</td>
+                    <td>${badgeClass ? `<span class="badge ${badgeClass}"></span>` : ''}</td>
+                `;
+                
+                leaderboardBody.appendChild(row);
+            });
+            
+            // Show leaderboard screen
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            leaderboardScreen.style.display = 'flex';
+        }
+        
+        function hideLeaderboard() {
+            leaderboardScreen.style.display = 'none';
+            
+            // Show appropriate screen
+            if (gameActive) {
+                // Return to game
+            } else if (score > 0) {
+                // Show game over screen if game has ended
+                gameOverScreen.style.display = 'flex';
+            } else {
+                // Show start screen if no game in progress
+                startScreen.style.display = 'flex';
+            }
+        }
+        
+        // On window load
+        window.addEventListener('load', function() {
+            // Initialize leaderboard
+            // This ensures sample data is loaded even if the user hasn't played yet
+            if (userScores.length === 0) {
+                showLeaderboard();
+                hideLeaderboard();
+            }
+        });
     </script>
 </body>
 </html>
